@@ -1,0 +1,19 @@
+ros-rolling-rc-genicam-driver (0.1.2-1focal) focal; urgency=high
+
+  * fix linking problems
+
+ -- Felix Ruess <felix.ruess@roboception.de>  Thu, 28 Jan 2021 23:00:00 -0000
+
+ros-rolling-rc-genicam-driver (0.1.1-1focal) focal; urgency=high
+
+  * fix typo in package xml
+
+ -- Felix Ruess <felix.ruess@roboception.de>  Sun, 17 Jan 2021 23:00:00 -0000
+
+ros-rolling-rc-genicam-driver (0.1.0-1focal) focal; urgency=high
+
+  * initial release
+
+ -- Felix Ruess <felix.ruess@roboception.de>  Sun, 17 Jan 2021 23:00:00 -0000
+
+
