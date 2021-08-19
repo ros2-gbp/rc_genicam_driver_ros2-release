@@ -154,8 +154,8 @@ std::vector<std::shared_ptr<rcg::Device>> getSupportedDevices(
         std::vector<std::shared_ptr<rcg::Device>> device = interf[k]->getDevices();
 
         for (size_t j = 0; j < device.size(); j++) {
-          if (device[j]->getVendor() == "Roboception GmbH" &&
-            (device[j]->getModel().substr(0,
+          if ((device[j]->getVendor() == "Roboception GmbH" ||
+            device[j]->getModel().substr(0,
             9) == "rc_visard" || device[j]->getModel().substr(0, 7) == "rc_cube") &&
             (devid == "*" || device[j]->getID() == devid || device[j]->getSerialNumber() == devid ||
             device[j]->getDisplayName() == devid))
@@ -461,7 +461,15 @@ void GenICamDriver::configure()
     rcg::setEnum(nodemap, "ComponentSelector", "Intensity", true);
     rcg::getEnum(nodemap, "PixelFormat", formats, true);
     for (auto && format : formats) {
-      if (format == "YCbCr411_8") {
+      if (format == "YCbCr411_8")
+      {
+        color_format = "YCbCr411_8";
+        color = true;
+        break;
+      }
+      if (format == "RGB8")
+      {
+        color_format = "RGB8";
         color = true;
         break;
       }
@@ -519,7 +527,7 @@ void GenICamDriver::configure()
   declareGenICamParameter("depth_maxdepth", nodemap, "DepthMaxDepth");
   declareGenICamParameter("depth_maxdeptherr", nodemap, "DepthMaxDepthErr");
 
-  declareGenICamParameter("ptp_enabled", nodemap, "GevIEEE1588");
+  declareGenICamParameter("ptp_enabled", nodemap, "PtpEnable");
 
   if (iocontrol_avail) {
     declareGenICamParameter("out1_mode", nodemap, "LineSource", "LineSelector", "Out1");
@@ -694,16 +702,16 @@ void GenICamDriver::updateSubscriptions(bool force)
 
   // enable or disable color
 
-  if (rcolor != scolor || force) {
-    const char * format = "Mono8";
+    if (rcolor != scolor || force) {
+    std::string format = "Mono8";
     if (rcolor) {
-      format = "YCbCr411_8";
+      format = color_format;
     }
 
     rcg::setEnum(nodemap, "ComponentSelector", "Intensity", true);
-    rcg::setEnum(nodemap, "PixelFormat", format, false);
+    rcg::setEnum(nodemap, "PixelFormat", format.c_str(), false);
     rcg::setEnum(nodemap, "ComponentSelector", "IntensityCombined", true);
-    rcg::setEnum(nodemap, "PixelFormat", format, false);
+    rcg::setEnum(nodemap, "PixelFormat", format.c_str(), false);
   }
 
   // store current settings
