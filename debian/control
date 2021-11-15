@@ -1,0 +1,12 @@
+Source: ros-galactic-rc-genicam-driver
+Section: misc
+Priority: optional
+Maintainer: Felix Ruess <felix.ruess@roboception.de>
+Build-Depends: debhelper (>= 9.0.0), ros-galactic-ament-cmake, ros-galactic-ament-cmake-cppcheck, ros-galactic-ament-cmake-xmllint, ros-galactic-ament-lint-auto, ros-galactic-diagnostic-updater, ros-galactic-image-transport, ros-galactic-rc-common-msgs, ros-galactic-rc-genicam-api, ros-galactic-rclcpp, ros-galactic-rclcpp-components, ros-galactic-sensor-msgs, ros-galactic-stereo-msgs, ros-galactic-ros-workspace
+Homepage: 
+Standards-Version: 3.9.2
+
+Package: ros-galactic-rc-genicam-driver
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ros-galactic-diagnostic-updater, ros-galactic-image-transport, ros-galactic-rc-common-msgs, ros-galactic-rc-genicam-api, ros-galactic-rclcpp, ros-galactic-rclcpp-components, ros-galactic-sensor-msgs, ros-galactic-stereo-msgs, ros-galactic-ros-workspace
+Description: Driver for rc_visard and rc_cube from Roboception GmbH
