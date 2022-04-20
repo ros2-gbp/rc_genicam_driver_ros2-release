@@ -1,1 +1,1 @@
-{"base": "3061b97", "parent": "debian/rolling/rc_genicam_driver", "previous": "2eb6730", "trim": "", "trimbase": ""}
+{"base": "9ff0fa0", "parent": "debian/humble/rc_genicam_driver", "previous": "b80b609", "trim": "", "trimbase": ""}
