@@ -1,3 +1,26 @@
+## rc_genicam_driver (rolling) - 0.3.0-1
+
+The packages in the `rc_genicam_driver` repository were released into the `rolling` distro by running `/usr/bin/bloom-release rc_genicam_driver --rosdistro rolling -e` on `Tue, 14 Mar 2023 12:53:31 -0000`
+
+The `rc_genicam_driver` package was released.
+
+Version of package(s) in repository `rc_genicam_driver`:
+
+- upstream repository: https://github.com/roboception/rc_genicam_driver_ros2.git
+- release repository: https://github.com/ros2-gbp/rc_genicam_driver_ros2-release.git
+- rosdistro version: `0.2.1-2`
+- old version: `0.2.1-2`
+- new version: `0.3.0-1`
+
+Versions of tools used:
+
+- bloom version: `0.11.2`
+- catkin_pkg version: `0.5.2`
+- rosdep version: `0.22.1`
+- rosdistro version: `0.9.0`
+- vcstools version: `0.1.42`
+
+
 ## rc_genicam_driver (humble) - 0.3.0-1
 
 The packages in the `rc_genicam_driver` repository were released into the `humble` distro by running `/usr/bin/bloom-release rc_genicam_driver --rosdistro humble -e` on `Tue, 14 Mar 2023 12:51:11 -0000`
