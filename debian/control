@@ -1,0 +1,12 @@
+Source: ros-rolling-rc-genicam-driver
+Section: misc
+Priority: optional
+Maintainer: Felix Ruess <felix.ruess@roboception.de>
+Build-Depends: debhelper (>= 9.0.0), ament-cmake, ament-cmake-cppcheck <!nocheck>, ament-cmake-xmllint <!nocheck>, ament-lint <!nocheck>, image-transport-tools, libdiagnostic-updater-dev, libimage-transport-dev, libsensor-msgs-dev, libstereo-msgs-dev, python3-diagnostic-updater, python3-sensor-msgs, python3-stereo-msgs, ros-rolling-rc-common-msgs, ros-rolling-rc-genicam-api, ros-rolling-rclcpp, ros-rolling-rclcpp-components, ros-sensor-msgs, ros-stereo-msgs, ros-rolling-ros-workspace
+Homepage: 
+Standards-Version: 3.9.2
+
+Package: ros-rolling-rc-genicam-driver
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, image-transport-tools, libdiagnostic-updater-dev, libimage-transport-dev, libsensor-msgs-dev, libstereo-msgs-dev, python3-diagnostic-updater, python3-sensor-msgs, python3-stereo-msgs, ros-rolling-rc-common-msgs, ros-rolling-rc-genicam-api, ros-rolling-rclcpp, ros-rolling-rclcpp-components, ros-sensor-msgs, ros-stereo-msgs, ros-rolling-ros-workspace
+Description: Driver for rc_visard and rc_cube from Roboception GmbH
