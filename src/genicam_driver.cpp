@@ -101,6 +101,7 @@ GenICamDriver::GenICamDriver(const rclcpp::NodeOptions & options)
   device_descr.description = "Device ID which can be '*' (default) if only one device is connected";
   device_descr.additional_constraints = "[[<interface>]:]<serial>|<name>";
   device_descr.read_only = true;
+  device_descr.dynamic_typing = true; // Without this, undeclare_parameter() throws in Galactic onward.
 
   declare_parameter("device", std::string("*"), device_descr);
 
@@ -136,39 +137,39 @@ std::vector<std::shared_ptr<rcg::Device>> getSupportedDevices(
   const std::string & devid,
   const std::vector<std::string> & iname)
 {
-  std::vector<std::shared_ptr<rcg::System>> system = rcg::System::getSystems();
+  std::vector<std::shared_ptr<rcg::System>> systems = rcg::System::getSystems();
   std::vector<std::shared_ptr<rcg::Device>> ret;
 
-  for (size_t i = 0; i < system.size(); i++) {
-    system[i]->open();
+  for (const auto &system: systems) {
+    system->open();
 
-    std::vector<std::shared_ptr<rcg::Interface>> interf = system[i]->getInterfaces();
+    std::vector<std::shared_ptr<rcg::Interface>> interfaces = system->getInterfaces();
 
-    for (size_t k = 0; k < interf.size(); k++) {
-      if (interf[k]->getTLType() == "GEV" &&
+    for (const auto &interf: interfaces) {
+      if (interf->getTLType() == "GEV" &&
         (iname.size() == 0 ||
-        std::find(iname.begin(), iname.end(), interf[k]->getID()) != iname.end()))
+        std::find(iname.begin(), iname.end(), interf->getID()) != iname.end()))
       {
-        interf[k]->open();
+        interf->open();
 
-        std::vector<std::shared_ptr<rcg::Device>> device = interf[k]->getDevices();
+        std::vector<std::shared_ptr<rcg::Device>> devices = interf->getDevices();
 
-        for (size_t j = 0; j < device.size(); j++) {
-          if ((device[j]->getVendor() == "Roboception GmbH" ||
-            device[j]->getModel().substr(0,
-            9) == "rc_visard" || device[j]->getModel().substr(0, 7) == "rc_cube") &&
-            (devid == "*" || device[j]->getID() == devid || device[j]->getSerialNumber() == devid ||
-            device[j]->getDisplayName() == devid))
+        for (const auto &device: devices) {
+          if ((device->getVendor() == "Roboception GmbH" ||
+            device->getModel().substr(0,
+            9) == "rc_visard" || device->getModel().substr(0, 7) == "rc_cube") &&
+            (devid == "*" || device->getID() == devid || device->getSerialNumber() == devid ||
+            device->getDisplayName() == devid))
           {
-            ret.push_back(device[j]);
+            ret.push_back(device);
           }
         }
 
-        interf[k]->close();
+        interf->close();
       }
     }
 
-    system[i]->close();
+    system->close();
   }
 
   return ret;
@@ -213,6 +214,7 @@ bool GenICamDriver::declareGenICamParameter(
     if (node != 0) {
       if (GenApi::IsReadable(node) && GenApi::IsWritable(node)) {
         rcl_interfaces::msg::ParameterDescriptor param_descr;
+        param_descr.dynamic_typing = true; // Without this, undeclare_parameter() throws in Galactic onward.
 
         if (description)
         {
@@ -274,7 +276,12 @@ bool GenICamDriver::declareGenICamParameter(
 
               param[ros_name] = name;
               param_float_scale[ros_name] = float_scale;
-              declare_parameter(ros_name, p->GetValue(false, false)/float_scale, param_descr);
+
+              double value=p->GetValue(false, false)/float_scale;
+              value=std::max(value, float_range.from_value);
+              value=std::min(value, float_range.to_value);
+
+              declare_parameter(ros_name, value, param_descr);
               ret = true;
             }
             break;
@@ -507,6 +514,7 @@ void GenICamDriver::configure()
     rcl_interfaces::msg::ParameterDescriptor param_descr;
     param_descr.description = "Exposure control mode: [Manual, Auto, HDR]";
     param_descr.additional_constraints = "Manual|Auto|HDR";
+    param_descr.dynamic_typing = true; // Without this, undeclare_parameter() throws in Galactic onward.
 
     std::string val="Auto";
     if (exp_auto == "Off") val="Manual";
@@ -767,35 +775,35 @@ void GenICamDriver::checkSubscriptions()
 }
 
 rcl_interfaces::msg::SetParametersResult GenICamDriver::paramCallback(
-  const std::vector<rclcpp::Parameter> & p)
+  const std::vector<rclcpp::Parameter> & params)
 {
   std::lock_guard<std::recursive_mutex> lock(param_mtx);
   rcl_interfaces::msg::SetParametersResult ret;
   ret.successful = true;
 
-  for (size_t i = 0; i < p.size(); i++) {
+  for (const auto &p: params) {
     // signal processing thread to update exposure and gain values if automatic
     // has been turned off
 
-    if (p[i].get_name() == "camera_exp_control" &&
-        (p[i].as_string() == "Manual" || p[i].as_string() == "HDR")) {
+    if (p.get_name() == "camera_exp_control" &&
+        (p.as_string() == "Manual" || p.as_string() == "HDR")) {
       update_exp_values = true;
     }
 
     // translate camera_exp_control and camera_exp_auto_mode parameters into
     // GenICam parameter ExposureAuto
 
-    if (p[i].get_name() == "camera_exp_control" || p[i].get_name() == "camera_exp_auto_mode") {
+    if (p.get_name() == "camera_exp_control" || p.get_name() == "camera_exp_auto_mode") {
       std::string exp_control, exp_auto_mode;
 
-      if (p[i].get_name() == "camera_exp_control") {
-        exp_control=p[i].as_string();
+      if (p.get_name() == "camera_exp_control") {
+        exp_control=p.as_string();
       } else {
         exp_control=get_parameter(std::string("camera_exp_control")).as_string();
       }
 
-      if (p[i].get_name() == "camera_exp_auto_mode") {
-        exp_auto_mode=p[i].as_string();
+      if (p.get_name() == "camera_exp_auto_mode") {
+        exp_auto_mode=p.as_string();
       } else {
         exp_auto_mode=get_parameter(std::string("camera_exp_auto_mode")).as_string();
       }
@@ -835,22 +843,22 @@ rcl_interfaces::msg::SetParametersResult GenICamDriver::paramCallback(
     // signal processing thread to update white balancing values if automatic
     // has been turned off
 
-    if (p[i].get_name() == "camera_wb_auto" && p[i].get_type() == rclcpp::PARAMETER_STRING &&
-      p[i].as_string() == "Off") {
+    if (p.get_name() == "camera_wb_auto" && p.get_type() == rclcpp::PARAMETER_STRING &&
+      p.as_string() == "Off") {
       update_wb_values = true;
     }
 
     // skip if value is cached one
 
-    if (p[i].get_name() == "out1_mode" && p[i].get_type() == rclcpp::PARAMETER_STRING &&
-      p[i].as_string() == remote_out1_mode) {
+    if (p.get_name() == "out1_mode" && p.get_type() == rclcpp::PARAMETER_STRING &&
+      p.as_string() == remote_out1_mode) {
       continue;
     }
 
     // set selector if any
 
     try {
-      const std::pair<std::string, std::string> & sel = param_selector.at(p[i].get_name());
+      const std::pair<std::string, std::string> & sel = param_selector.at(p.get_name());
 
       std::string v = rcg::getEnum(nodemap, sel.first.c_str(), false);
 
@@ -866,21 +874,21 @@ rcl_interfaces::msg::SetParametersResult GenICamDriver::paramCallback(
     // translate ros parameter name to GenICam name
 
     try {
-      const std::string & name = param.at(p[i].get_name());
+      const std::string & name = param.at(p.get_name());
 
-      switch (p[i].get_type()) {
+      switch (p.get_type()) {
         case rclcpp::PARAMETER_BOOL:
-          rcg::setBoolean(nodemap, name.c_str(), p[i].as_bool(), true);
+          rcg::setBoolean(nodemap, name.c_str(), p.as_bool(), true);
           break;
 
         case rclcpp::PARAMETER_INTEGER:
-          rcg::setInteger(nodemap, name.c_str(), p[i].as_int(), true);
+          rcg::setInteger(nodemap, name.c_str(), p.as_int(), true);
           break;
 
         case rclcpp::PARAMETER_DOUBLE:
           {
-            double scale = param_float_scale.at(p[i].get_name());
-            rcg::setFloat(nodemap, name.c_str(), scale*p[i].as_double(), true);
+            double scale = param_float_scale.at(p.get_name());
+            rcg::setFloat(nodemap, name.c_str(), scale*p.as_double(), true);
           }
           break;
 
@@ -888,26 +896,25 @@ rcl_interfaces::msg::SetParametersResult GenICamDriver::paramCallback(
           {
             // if the parameter is an enum and the given value does not fit,
             // an exception is thrown that causes rejection of the value
-            rcg::setString(nodemap, name.c_str(), p[i].as_string().c_str(), true);
+            rcg::setString(nodemap, name.c_str(), p.as_string().c_str(), true);
 
-            if (p[i].get_name() == "out1_mode") {
-              remote_out1_mode = p[i].as_string();
+            if (p.get_name() == "out1_mode") {
+              remote_out1_mode = p.as_string();
             }
           }
           break;
 
         default:
           ret.successful = false;
-          ret.reason = "Internal error: Unknown type of parameter " + p[i].get_name();
+          ret.reason = "Internal error: Unknown type of parameter " + p.get_name();
           break;
       }
     } catch (const std::out_of_range &) {
-      ret.successful = false;
-      ret.reason = "Internal error: unknown parameter " + p[i].get_name();
-      break;
+      // permitted as this callback may also be called by parameters that we do
+      // not manage ourselves
     } catch (const std::exception & ex) {
       ret.successful = false;
-      ret.reason = "Cannot set parameter " + p[i].get_name() + ": " + ex.what();
+      ret.reason = "Cannot set parameter " + p.get_name() + ": " + ex.what();
       break;
     }
   }
@@ -1131,12 +1138,12 @@ void GenICamDriver::process()
 
               if (rcg::setEnum(nodemap, "BalanceRatioSelector", "Red", false)) {
                 double ratio = rcg::getFloat(nodemap, "BalanceRatio", 0, 0, true, true);
-                set_parameter(rclcpp::Parameter("camera_wb_red", ratio));
+                set_parameter(rclcpp::Parameter("camera_wb_ratio_red", ratio));
               }
 
               if (rcg::setEnum(nodemap, "BalanceRatioSelector", "Blue", false)) {
                 double ratio = rcg::getFloat(nodemap, "BalanceRatio", 0, 0, true, true);
-                set_parameter(rclcpp::Parameter("camera_wb_blue", ratio));
+                set_parameter(rclcpp::Parameter("camera_wb_ratio_blue", ratio));
               }
             }
 
