@@ -1,3 +1,18 @@
+0.4.0 (2026-03-12)
+------------------
+
+* Added parameters for binning and triggering
+* Added service call for software triggering of cameras
+* For supporting USB cameras, made getting MAC, IP and GEV package size from nodemap optional
+* Fixed undeclaring parameters for cases where node has to reconnect
+* Made setting of GenICam parameters more robust against failures
+
+0.3.2 (2025-07-31)
+------------------
+
+* Increased tolerance for alternate exposure mode to 1 second
+* Fixed rounding when converting color to monochrome
+
 0.3.1 (2024-06-07)
 ------------------
 
